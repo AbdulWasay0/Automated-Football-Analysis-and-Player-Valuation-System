@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Transfer Prediction | Football Intelligence{% endblock %}
+
+{% block content %}
+{% set current_action = active_action|default('predict') %}
+<section class="page-hero compact">
+  <div>
+    <p class="eyebrow">Transfer Fee Prediction</p>
+    <h1>Choose a transfer intelligence action.</h1>
+    <p>Select one of the seven workflows from the original terminal menu, submit it, review the result, then choose another action from the same page.</p>
+  </div>
+</section>
+
+<section class="transfer-menu" data-transfer-menu data-active-action="{{ current_action }}">
+  <button type="button" class="action-card {{ 'active' if current_action == 'search' else '' }}" data-transfer-action="search"><strong>1</strong><span>Search Player</span></button>
+  <button type="button" class="action-card {{ 'active' if current_action == 'predict' else '' }}" data-transfer-action="predict"><strong>2</strong><span>Predict Transfer Value</span></button>
+  <button type="button" class="action-card {{ 'active' if current_action == 'future' else '' }}" data-transfer-action="future"><strong>3</strong><span>Future Performance</span></button>
+  <button type="button" class="action-card {{ 'active' if current_action == 'filter' else '' }}" data-transfer-action="filter"><strong>4</strong><span>Advanced Filter</span></button>
+  <button type="button" class="action-card {{ 'active' if current_action == 'compare' else '' }}" data-transfer-action="compare"><strong>5</strong><span>Compare Players</span></button>
+  <button type="button" class="action-card {{ 'active' if current_action == 'market' else '' }}" data-transfer-action="market"><strong>6</strong><span>Market Insights</span></button>
+  <button type="button" class="action-card {{ 'active' if current_action == 'simulate' else '' }}" data-transfer-action="simulate"><strong>7</strong><span>Simulate Transfer</span></button>
+</section>
+
+<section class="panel transfer-workbench">
+  <div class="panel-header">
+    <h2>Action Details</h2>
+    <span class="badge">Menu 1-7</span>
+  </div>
+
+  <div class="transfer-form-panel {{ 'active' if current_action == 'search' else '' }}" data-transfer-panel="search">
+    <form class="form-grid js-loading-form transfer-action-form" method="post">
+      <input type="hidden" name="action" value="search">
+      <label>
+        <span>Player name</span>
+        <input name="player_name" type="text" value="{{ form_data.get('player_name', '') }}" placeholder="e.g. Lionel Messi" required>
+      </label>
+      <div class="form-actions"><button class="btn primary" type="submit"><span class="btn-label">Search Player</span><span class="spinner" aria-hidden="true"></span></button></div>
+      <div class="inline-loader"><span class="loader-ring"><span class="loader-percent">0%</span></span><strong>Searching player profile...</strong></div>
+    </form>
+  </div>
+
+  <div class="transfer-form-panel {{ 'active' if current_action == 'predict' else '' }}" data-transfer-panel="predict">
+    <form class="form-grid js-loading-form transfer-action-form" method="post">
+      <input type="hidden" name="action" value="predict">
+      <label><span>Player name</span><input name="player_name" type="text" value="{{ form_data.get('player_name', '') }}" placeholder="e.g. Jude Bellingham" required></label>
+      <label><span>From club</span><input name="from_club" type="text" value="{{ form_data.get('from_club', '') }}" placeholder="e.g. Real Madrid"></label>
+      <label><span>Buying club</span><input name="to_club" type="text" value="{{ form_data.get('to_club', '') }}" placeholder="e.g. Manchester City" required></label>
+      <label>
+        <span>Model</span>
+        {% set selected_model = form_data.get('model', 'xgboost') %}
+        <select name="model">
+          <option value="xgboost" {{ 'selected' if selected_model == 'xgboost' else '' }}>XGBoost</option>
+          <option value="random_forest" {{ 'selected' if selected_model == 'random_forest' else '' }}>Random Forest</option>
+          <option value="neural_network" {{ 'selected' if selected_model == 'neural_network' else '' }}>Neural Network</option>
+        </select>
+      </label>
+      <div class="form-actions"><button class="btn primary" type="submit"><span class="btn-label">Predict Fee</span><span class="spinner" aria-hidden="true"></span></button></div>
+      <div class="inline-loader"><span class="loader-ring"><span class="loader-percent">0%</span></span><strong>Predicting transfer fee...</strong></div>
+    </form>
+  </div>
+
+  <div class="transfer-form-panel {{ 'active' if current_action == 'future' else '' }}" data-transfer-panel="future">
+    <form class="form-grid js-loading-form transfer-action-form" method="post">
+      <input type="hidden" name="action" value="future">
+      <label><span>Player name</span><input name="player_name" type="text" value="{{ form_data.get('player_name', '') }}" placeholder="e.g. Kylian Mbappe" required></label>
+      <label><span>Seasons ahead</span><input name="seasons" type="number" min="1" max="12" value="{{ form_data.get('seasons', '6') }}" required></label>
+      <div class="form-actions"><button class="btn primary" type="submit"><span class="btn-label">Predict Future</span><span class="spinner" aria-hidden="true"></span></button></div>
+      <div class="inline-loader"><span class="loader-ring"><span class="loader-percent">0%</span></span><strong>Building performance trajectory...</strong></div>
+    </form>
+  </div>
+
+  <div class="transfer-form-panel {{ 'active' if current_action == 'filter' else '' }}" data-transfer-panel="filter">
+    <form class="form-grid js-loading-form transfer-action-form" method="post">
+      <input type="hidden" name="action" value="filter">
+      <label><span>Budget max (EUR millions)</span><input name="budget_m" type="number" min="0" step="0.1" value="{{ form_data.get('budget_m', '') }}" placeholder="Optional"></label>
+      <label><span>Max age</span><input name="max_age" type="number" min="15" max="45" value="{{ form_data.get('max_age', '') }}" placeholder="Optional"></label>
+      <label>
+        <span>Position</span>
+        {% set selected_position = form_data.get('position', 'Any') %}
+        <select name="position">
+          {% for item in ['Any', 'Attacker', 'Midfielder', 'Defender', 'Goalkeeper'] %}
+            <option value="{{ item }}" {{ 'selected' if selected_position == item else '' }}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label><span>Minimum goals</span><input name="min_goals" type="number" min="0" value="{{ form_data.get('min_goals', '0') }}"></label>
+      <label><span>Minimum assists</span><input name="min_assists" type="number" min="0" value="{{ form_data.get('min_assists', '0') }}"></label>
+      <label><span>League</span><input name="league" type="text" value="{{ form_data.get('league', '') }}" placeholder="Any"></label>
+      <label><span>Nationality</span><input name="nationality" type="text" value="{{ form_data.get('nationality', '') }}" placeholder="Optional"></label>
+      <label>
+        <span>Foot</span>
+        {% set selected_foot = form_data.get('foot', 'Any') %}
+        <select name="foot">
+          {% for item in ['Any', 'Left', 'Right', 'Both'] %}
+            <option value="{{ item }}" {{ 'selected' if selected_foot == item else '' }}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Sort by</span>
+        {% set selected_sort = form_data.get('sort_by', 'score') %}
+        <select name="sort_by">
+          {% for value, label in [('score', 'Score'), ('value', 'Value'), ('goals', 'Goals'), ('age', 'Age')] %}
+            <option value="{{ value }}" {{ 'selected' if selected_sort == value else '' }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="form-actions"><button class="btn primary" type="submit"><span class="btn-label">Run Filter</span><span class="spinner" aria-hidden="true"></span></button></div>
+      <div class="inline-loader"><span class="loader-ring"><span class="loader-percent">0%</span></span><strong>Filtering player dataset...</strong></div>
+    </form>
+  </div>
+
+  <div class="transfer-form-panel {{ 'active' if current_action == 'compare' else '' }}" data-transfer-panel="compare">
+    <form class="form-grid js-loading-form transfer-action-form" method="post">
+      <input type="hidden" name="action" value="compare">
+      <label><span>Player 1</span><input name="player_one" type="text" value="{{ form_data.get('player_one', '') }}" placeholder="e.g. Erling Haaland" required></label>
+      <label><span>Player 2</span><input name="player_two" type="text" value="{{ form_data.get('player_two', '') }}" placeholder="e.g. Kylian Mbappe" required></label>
+      <div class="form-actions"><button class="btn primary" type="submit"><span class="btn-label">Compare Players</span><span class="spinner" aria-hidden="true"></span></button></div>
+      <div class="inline-loader"><span class="loader-ring"><span class="loader-percent">0%</span></span><strong>Comparing players...</strong></div>
+    </form>
+  </div>
+
+  <div class="transfer-form-panel {{ 'active' if current_action == 'market' else '' }}" data-transfer-panel="market">
+    <form class="js-loading-form transfer-action-form" method="post">
+      <input type="hidden" name="action" value="market">
+      <div class="empty-action">
+        <h3>Market Insights & Reports</h3>
+        <p class="muted">Generate average value by position, value-age curve, top players, spending clubs, and transfer activity reports.</p>
+      </div>
+      <button class="btn primary" type="submit"><span class="btn-label">Generate Market Report</span><span class="spinner" aria-hidden="true"></span></button>
+      <div class="inline-loader"><span class="loader-ring"><span class="loader-percent">0%</span></span><strong>Generating market report...</strong></div>
+    </form>
+  </div>
+
+  <div class="transfer-form-panel {{ 'active' if current_action == 'simulate' else '' }}" data-transfer-panel="simulate">
+    <form class="form-grid js-loading-form transfer-action-form" method="post">
+      <input type="hidden" name="action" value="simulate">
+      <label><span>Player name</span><input name="player_name" type="text" value="{{ form_data.get('player_name', '') }}" placeholder="e.g. Jamal Musiala" required></label>
+      <label><span>From club</span><input name="from_club" type="text" value="{{ form_data.get('from_club', '') }}" placeholder="Optional"></label>
+      <label><span>To club</span><input name="to_club" type="text" value="{{ form_data.get('to_club', '') }}" placeholder="e.g. Arsenal" required></label>
+      <label><span>Budget (EUR millions)</span><input name="budget_m" type="number" min="0" step="0.1" value="{{ form_data.get('budget_m', '') }}" placeholder="Optional"></label>
+      <div class="form-actions"><button class="btn primary" type="submit"><span class="btn-label">Simulate Transfer</span><span class="spinner" aria-hidden="true"></span></button></div>
+      <div class="inline-loader"><span class="loader-ring"><span class="loader-percent">0%</span></span><strong>Simulating transfer...</strong></div>
+    </form>
+  </div>
+</section>
+
+{% if result %}
+<section class="results-section">
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Result</p>
+        <h2>{{ result.title }}</h2>
+      </div>
+      <a class="btn secondary" href="{{ url_for('download', filename=result.download_file) }}">Download PDF</a>
+    </div>
+
+    {% if result.kind == 'prediction' %}
+      <div class="prediction-card inline-prediction">
+        <strong>{{ result.predicted_fee_display }}</strong>
+        <span>{{ result.player }} &rarr; {{ result.to_club }}</span>
+      </div>
+      <dl class="breakdown-grid">
+        {% for key, value in result.breakdown.items() %}
+          <div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
+        {% endfor %}
+      </dl>
+    {% elif result.kind == 'comparison' %}
+      <dl class="breakdown-grid">
+        {% for key, value in result.summary.items() %}
+          <div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
+        {% endfor %}
+      </dl>
+      <div class="comparison-grid">
+        {% for player in result.players %}
+          <dl class="stats-list">
+            {% for key, value in player.items() %}
+              <div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
+            {% endfor %}
+          </dl>
+        {% endfor %}
+      </div>
+    {% else %}
+      {% if result.summary %}
+        <dl class="breakdown-grid">
+          {% for key, value in result.summary.items() %}
+            <div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
+          {% endfor %}
+        </dl>
+      {% endif %}
+    {% endif %}
+
+    {% if result.market %}
+      <div class="market-grid">
+        {% for title, values in result.market.items() %}
+          <div class="mini-report">
+            <h3>{{ title }}</h3>
+            <dl class="stats-list">
+              {% for key, value in values.items() %}
+                <div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
+              {% endfor %}
+            </dl>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if result.rows %}
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              {% for key in result.rows[0].keys() %}
+                <th>{{ key.replace('_', ' ')|title }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in result.rows %}
+              <tr>
+                {% for value in row.values() %}
+                  <td>{{ value }}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Football Intelligence{% endblock %}
+
+{% block content %}
+<section class="hero dashboard-hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Integrated analysis workspace</p>
+    <h1>Football video analysis and transfer valuation in one clean interface.</h1>
+    <p class="hero-text">Upload match footage for tracking insights, or estimate player market value from the transfer prediction system already in your project.</p>
+  </div>
+  <div class="metrics-strip" aria-label="Dashboard features">
+    <div><strong>Video</strong><span>Tracking and possession</span></div>
+    <div><strong>ML</strong><span>Transfer fee prediction</span></div>
+    <div><strong>Export</strong><span>Video, CSV, and JSON</span></div>
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="section-heading">
+    <p class="eyebrow">Choose a module</p>
+    <h2>Start with the workflow you need</h2>
+  </div>
+
+  <div class="module-grid">
+    <a class="module-card" href="{{ url_for('football') }}">
+      <div class="card-icon">&#9654;</div>
+      <h3>Football Analysis</h3>
+      <p>Upload a video, run player and ball tracking, review possession statistics, and download processed outputs.</p>
+      <span class="card-action">Open analysis</span>
+    </a>
+    <a class="module-card" href="{{ url_for('transfer') }}">
+      <div class="card-icon">&euro;</div>
+      <h3>Transfer Fee Prediction</h3>
+      <p>Predict a player transfer fee using the existing structured-data model and inspect the pricing breakdown.</p>
+      <span class="card-action">Open predictor</span>
+    </a>
+  </div>
+</section>
+{% endblock %}

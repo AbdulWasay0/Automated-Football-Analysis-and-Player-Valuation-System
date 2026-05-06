@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Football Analysis | Football Intelligence{% endblock %}
+
+{% block content %}
+<section class="page-hero compact">
+  <div>
+    <p class="eyebrow">Football Analysis</p>
+    <h1>Upload match footage and generate tracking insights.</h1>
+    <p>Runs the existing computer-vision pipeline and returns processed video, possession stats, and pitch movement outputs.</p>
+  </div>
+</section>
+
+<section class="content-grid">
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Video Upload</h2>
+      <span class="badge">MP4 &middot; MOV &middot; AVI &middot; MKV &middot; WEBM</span>
+    </div>
+    <form class="upload-form" method="post" action="{{ url_for('football_start') }}" enctype="multipart/form-data" data-football-form>
+      <label class="file-drop" for="video">
+        <input id="video" name="video" type="file" accept="video/*" required>
+        <span class="file-title">Choose a match video</span>
+        <span class="file-subtitle" data-file-name>Drag-style upload area with local file selection</span>
+      </label>
+      <button class="btn primary" type="submit">
+        <span class="btn-label">Start Analysis</span>
+        <span class="spinner" aria-hidden="true"></span>
+      </button>
+      <div class="processing-bar-wrap" role="status" aria-live="polite" data-football-progress>
+        <div class="processing-copy">
+          <strong data-football-progress-title>Processing video...</strong>
+          <span data-football-progress-message>Running detection, tracking, possession, and pitch mapping.</span>
+        </div>
+        <div class="processing-track">
+          <div class="processing-bar" data-football-progress-bar></div>
+        </div>
+        <div class="processing-meta">
+          <span><strong data-football-progress-percent>0%</strong> complete</span>
+          <span><strong data-football-progress-frames>0 / 0</strong> frames</span>
+          <span><strong data-football-progress-remaining>0</strong> left</span>
+        </div>
+      </div>
+      <p class="form-note">Processing can take several minutes depending on video length and model backend.</p>
+    </form>
+  </div>
+
+  <aside class="panel feature-panel">
+    <div class="panel-header">
+      <h2>Module Features</h2>
+    </div>
+    <ul class="feature-list">
+      <li>Player and referee detection</li>
+      <li>Team assignment and tracking IDs</li>
+      <li>Ball-to-player possession assignment</li>
+      <li>Team possession percentage summary</li>
+      <li>Pitch radar map and processed match video</li>
+    </ul>
+  </aside>
+</section>
+
+{% if result %}
+<section class="results-section">
+  <div class="section-heading">
+    <p class="eyebrow">Results</p>
+    <h2>Processed analysis output</h2>
+  </div>
+
+  <div class="panel input-used-panel">
+    <div class="panel-header">
+      <h3>Input Video Used</h3>
+      <a class="btn small ghost" href="{{ url_for('static', filename=result.input_video_path) }}" download>Download Input</a>
+    </div>
+    <video class="result-video compact-video" controls preload="metadata">
+      <source src="{{ url_for('static', filename=result.input_video_path) }}">
+    </video>
+  </div>
+
+  <div class="result-grid">
+    <div class="panel media-panel">
+      <div class="panel-header">
+        <h3>Processed Video</h3>
+      </div>
+      <video class="result-video" controls preload="metadata">
+        <source src="{{ url_for('static', filename=result.video_path) }}">
+      </video>
+      <div class="button-row">
+        <a class="btn secondary" href="{{ url_for('download', filename=result.video) }}">Download Video</a>
+        {% if result.original_video and result.original_video != result.video %}
+          <a class="btn ghost" href="{{ url_for('download', filename=result.original_video) }}">Download AVI</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Statistics</h3>
+      </div>
+      {% if result.stats.get('items') %}
+        <dl class="stats-list">
+          {% for key, value in result.stats.get('items').items() %}
+            <div>
+              <dt>{{ key }}</dt>
+              <dd>{{ value }}</dd>
+            </div>
+          {% endfor %}
+        </dl>
+      {% else %}
+        <p class="muted">{{ result.stats.get('message') }}</p>
+      {% endif %}
+      <div class="button-row">
+        {% if result.stats_txt %}
+          <a class="btn secondary" href="{{ url_for('download', filename=result.stats_txt) }}">Download TXT</a>
+        {% endif %}
+        <a class="btn secondary" href="{{ url_for('download', filename=result.stats_csv) }}">Download CSV</a>
+        <a class="btn ghost" href="{{ url_for('download', filename=result.stats_json) }}">Download JSON</a>
+      </div>
+    </div>
+  </div>
+
+  {% if result.pitch_video_path %}
+    <div class="panel pitch-panel">
+      <div class="panel-header">
+        <h3>Pitch Movement Video</h3>
+      </div>
+      <video class="result-video" controls preload="metadata">
+        <source src="{{ url_for('static', filename=result.pitch_video_path) }}">
+      </video>
+      <div class="button-row">
+        <a class="btn secondary" href="{{ url_for('download', filename=result.pitch_video) }}">Download Pitch Video</a>
+        {% if result.original_pitch_video and result.original_pitch_video != result.pitch_video %}
+          <a class="btn ghost" href="{{ url_for('download', filename=result.original_pitch_video) }}">Download Pitch AVI</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if result.pitch_map_path %}
+    <div class="panel pitch-panel">
+      <div class="panel-header">
+        <h3>Pitch Radar Snapshot</h3>
+        <a class="btn small ghost" href="{{ url_for('download', filename=result.pitch_map) }}">Download Image</a>
+      </div>
+      <img src="{{ url_for('static', filename=result.pitch_map_path) }}" alt="Pitch radar output">
+    </div>
+  {% endif %}
+
+  <div class="panel output-downloads">
+    <div class="panel-header">
+      <h3>All Football Outputs</h3>
+    </div>
+    <div class="downloads-grid">
+      <a class="btn ghost" href="{{ url_for('download', filename=result.video) }}">Processed Video</a>
+      {% if result.original_video and result.original_video != result.video %}
+        <a class="btn ghost" href="{{ url_for('download', filename=result.original_video) }}">Processed AVI</a>
+      {% endif %}
+      {% if result.pitch_video %}
+        <a class="btn ghost" href="{{ url_for('download', filename=result.pitch_video) }}">Pitch Video</a>
+      {% endif %}
+      {% if result.original_pitch_video and result.original_pitch_video != result.pitch_video %}
+        <a class="btn ghost" href="{{ url_for('download', filename=result.original_pitch_video) }}">Pitch AVI</a>
+      {% endif %}
+      {% if result.pitch_map %}
+        <a class="btn ghost" href="{{ url_for('download', filename=result.pitch_map) }}">Pitch Map Image</a>
+      {% endif %}
+      {% if result.stats_txt %}
+        <a class="btn ghost" href="{{ url_for('download', filename=result.stats_txt) }}">Stats TXT</a>
+      {% endif %}
+      <a class="btn ghost" href="{{ url_for('download', filename=result.stats_csv) }}">Stats CSV</a>
+      <a class="btn ghost" href="{{ url_for('download', filename=result.stats_json) }}">Stats JSON</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
